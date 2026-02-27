@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+{% block title %}History{% endblock %}
+{% block page_title %}📜 Inspection History{% endblock %}
+
+{% block content %}
+<!-- Toolbar -->
+<div class="history-toolbar fade-up">
+     <input type="text" class="search-input" id="histSearch" placeholder="🔍 Search by file name or defect…"
+          oninput="filterHistory()">
+     <select class="filter-select" id="histFilterStatus" onchange="filterHistory()">
+          <option value="">All Status</option>
+          <option value="PASS">✅ PASS</option>
+          <option value="FAIL">❌ FAIL</option>
+     </select>
+     <select class="filter-select" id="histFilterModel" onchange="filterHistory()">
+          <option value="">All Models</option>
+          <option value="YOLOv8">YOLOv8</option>
+          <option value="CNN+LSTM">CNN+LSTM</option>
+          <option value="Pipeline">Pipeline</option>
+     </select>
+     <button class="btn btn-secondary btn-sm" onclick="loadHistoryPage()">🔄 Refresh</button>
+     <button class="btn btn-danger btn-sm" onclick="clearHistory()">🗑 Clear</button>
+</div>
+
+<!-- Stats Row -->
+<div class="kpi-grid fade-up" style="grid-template-columns:repeat(4,1fr)">
+     <div class="kpi-card kpi-cyan">
+          <div class="kpi-label">Total Records</div>
+          <div class="kpi-value" id="hKpiTotal">0</div>
+     </div>
+     <div class="kpi-card kpi-green">
+          <div class="kpi-label">Passed</div>
+          <div class="kpi-value" id="hKpiPass">0</div>
+     </div>
+     <div class="kpi-card kpi-red">
+          <div class="kpi-label">Failed</div>
+          <div class="kpi-value" id="hKpiFail">0</div>
+     </div>
+     <div class="kpi-card kpi-violet">
+          <div class="kpi-label">Pass Rate</div>
+          <div class="kpi-value" id="hKpiRate">—</div>
+     </div>
+</div>
+
+<!-- Table -->
+<div class="card fade-up" style="padding:0;overflow:hidden">
+     <div style="overflow-x:auto">
+          <table class="data-table" id="historyTable">
+               <thead>
+                    <tr>
+                         <th>Thumbnail</th>
+                         <th>File</th>
+                         <th>Status</th>
+                         <th>Model</th>
+                         <th>Confidence</th>
+                         <th>Defects</th>
+                         <th>Timestamp</th>
+                    </tr>
+               </thead>
+               <tbody id="historyTableBody">
+                    <tr>
+                         <td colspan="7">
+                              <div class="empty-state">
+                                   <div class="empty-icon">⏳</div>Loading history…
+                              </div>
+                         </td>
+                    </tr>
+               </tbody>
+          </table>
+     </div>
+</div>
+
+<!-- Active Learning Section -->
+<div class="card fade-up">
+     <div class="section-header">
+          <div>
+               <div class="section-title">🎓 Active Learning Queue</div>
+               <div class="section-sub">Low-confidence images awaiting review</div>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="loadPendingImages()">🔄 Refresh</button>
+     </div>
+     <div id="pendingList">
+          <div class="empty-state">
+               <div class="empty-icon">✅</div>No pending images for review
+          </div>
+     </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+     // ── History Page JS ─────────────────────────────────────────
+     let allHistory = [];
+
+     async function loadHistoryPage() {
+          try {
+               const r = await fetch('/api/history');
+               const d = await r.json();
+               allHistory = d.history || [];
+               renderHistoryTable(allHistory);
+               updateHistoryKPIs(allHistory);
+          } catch (e) {
+               document.getElementById('historyTableBody').innerHTML =
+                    `<tr><td colspan="7"><div class="empty-state">Failed to load: ${e.message}</div></td></tr>`;
+          }
+     }
+
+     function renderHistoryTable(data) {
+          const body = document.getElementById('historyTableBody');
+          if (!data.length) {
+               body.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📭</div>No records found</div></td></tr>';
+               return;
+          }
+          body.innerHTML = data.map((h, i) => `
+    <tr class="slide-in" style="animation-delay:${i * 0.04}s">
+      <td>
+        <div class="table-thumb-placeholder">
+          ${h.verdict === 'FAIL' ? '❌' : '✅'}
+        </div>
+      </td>
+      <td><span class="mono" style="font-size:0.8rem">${h.filename || '—'}</span></td>
+      <td>
+        <span class="status-badge ${h.verdict === 'FAIL' ? 'fail' : 'pass'}">
+          ${h.verdict === 'FAIL' ? '❌ FAIL' : '✅ PASS'}
+        </span>
+      </td>
+      <td><span class="tag tag-cyan" style="font-size:0.68rem">${h.model || '—'}</span></td>
+      <td>
+        <div class="conf-bar">
+          <div class="conf-bar-track">
+            <div class="conf-bar-fill" style="width:${((h.confidence || 0) * 100).toFixed(0)}%;
+              background:${h.verdict === 'FAIL' ? 'var(--red)' : h.confidence > 0.7 ? 'var(--green)' : 'var(--amber)'}">
+            </div>
+          </div>
+          <span class="mono text-xs">${((h.confidence || 0) * 100).toFixed(1)}%</span>
+        </div>
+      </td>
+      <td>
+        <span style="color:${h.num_defects > 0 ? 'var(--red)' : 'var(--green)'};font-weight:700;font-family:var(--mono)">
+          ${h.num_defects || 0}
+        </span>
+      </td>
+      <td class="text-muted text-xs mono">${h.timestamp || '—'}</td>
+    </tr>`).join('');
+     }
+
+     function updateHistoryKPIs(data) {
+          const total = data.length;
+          const passed = data.filter(h => h.verdict !== 'FAIL').length;
+          const failed = total - passed;
+          document.getElementById('hKpiTotal').textContent = total;
+          document.getElementById('hKpiPass').textContent = passed;
+          document.getElementById('hKpiFail').textContent = failed;
+          document.getElementById('hKpiRate').textContent = total ? Math.round(passed / total * 100) + '%' : '—';
+     }
+
+     function filterHistory() {
+          const q = document.getElementById('histSearch').value.toLowerCase();
+          const st = document.getElementById('histFilterStatus').value;
+          const md = document.getElementById('histFilterModel').value;
+          const filtered = allHistory.filter(h => {
+               const matchQ = !q || (h.filename || '').toLowerCase().includes(q);
+               const matchSt = !st || h.verdict === st;
+               const matchMd = !md || (h.model || '').includes(md);
+               return matchQ && matchSt && matchMd;
+          });
+          renderHistoryTable(filtered);
+     }
+
+     function clearHistory() {
+          allHistory = [];
+          renderHistoryTable([]);
+          updateHistoryKPIs([]);
+          showToast('History cleared (session only)', 'info');
+     }
+
+     async function loadPendingImages() {
+          try {
+               const r = await fetch('/api/pending-images');
+               const d = await r.json();
+               const list = document.getElementById('pendingList');
+               if (!d.pending || !d.pending.length) {
+                    list.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div>No pending images for review</div>';
+                    return;
+               }
+               list.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem">
+      ${d.pending.map(fn => `
+        <div class="card" style="padding:0.75rem">
+          <img src="/api/pending-images/${fn}" style="width:100%;border-radius:8px;margin-bottom:0.5rem;max-height:140px;object-fit:cover">
+          <div class="text-xs text-muted mono" style="margin-bottom:0.5rem;word-break:break-all">${fn}</div>
+          <select id="lbl-${fn.replace(/[^a-z0-9]/gi, '')}" class="filter-select" style="width:100%;margin-bottom:0.5rem;font-size:0.78rem">
+            <option value="0">Crack</option><option value="1">Blowhole</option>
+            <option value="2">Break</option><option value="3">Fray</option>
+            <option value="4">Open</option><option value="5">Short</option>
+            <option value="6">Mousebite</option><option value="7">Spur</option>
+            <option value="8">Copper</option><option value="9">Pin Hole</option>
+            <option value="10">Good</option>
+          </select>
+          <button class="btn btn-primary btn-sm btn-full" onclick="submitPendingLabel('${fn}')">Label & Approve</button>
+        </div>`).join('')}
+    </div>`;
+          } catch (e) { console.error(e) }
+     }
+
+     async function submitPendingLabel(fn) {
+          const selId = 'lbl-' + fn.replace(/[^a-z0-9]/gi, '');
+          const cls = document.getElementById(selId)?.value || '0';
+          try {
+               const r = await fetch('/api/label', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filename: fn, label_class: cls, bboxes: [] })
+               });
+               if (r.ok) { showToast('Image labeled successfully!', 'info'); loadPendingImages() }
+               else showToast('Failed to label image', 'fail');
+          } catch (e) { showToast('Error: ' + e.message, 'fail') }
+     }
+
+     // Init
+     loadHistoryPage();
+     loadPendingImages();
+</script>
+{% endblock %}

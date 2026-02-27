@@ -1,0 +1,44 @@
+# Configuration for AI Defect Detection Upgrade
+
+training:
+  yolo:
+    base_model: "models/best.pt" # Or yolov8n.pt if starting fresh
+    epochs: 10
+    img_size: 640
+    batch_size: 16
+    workers: 4
+    patience: 10
+    freeze: 10 # Number of layers to freeze in transfer learning
+  
+  increment:
+    epochs: 15 # Shorter epochs for incremental fine-tuning
+    batch_size: 8
+
+  autoencoder:
+    epochs: 50
+    batch_size: 32
+    learning_rate: 0.001
+
+augmentations:
+  yolo:  # Ultralytics hyperparameter overrides
+    degrees: 15.0      # RandomRotation
+    fliplr: 0.5        # HorizontalFlip
+    hsv_h: 0.015       # ColorJitter (Hue)
+    hsv_s: 0.7         # ColorJitter (Saturation)
+    hsv_v: 0.4         # ColorJitter (Value)
+    copy_paste: 0.1    # Simulates GaussianBlur somewhat (Ultralytics doesn't expose raw Blur natively as hyperparams easily save for mosaic/mixup, but these handle the requirements)
+    mosaic: 1.0
+  
+  autoencoder:
+    flip: "horizontal_and_vertical"
+    rotation_factor: 0.2
+    contrast_factor: 0.2
+
+active_learning:
+  confidence_threshold: 0.80
+  retrain_trigger_count: 50 # Retrain when this many new images are labeled
+  pending_dir: "review_pending"
+  labeled_dir: "newly_labeled"
+
+anomaly:
+  threshold: 0.05 # MSE threshold. If > this, it's flagged as an anomaly.

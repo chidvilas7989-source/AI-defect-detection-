@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <title>{% block title %}Dashboard{% endblock %} | DefectAI Pro</title>
+     <meta name="description" content="AI-powered PCB defect detection — real-time industrial quality control.">
+     <link rel="preconnect" href="https://fonts.googleapis.com">
+     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Poppins:wght@600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
+          rel="stylesheet">
+     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+     {% block head %}{% endblock %}
+</head>
+
+<body>
+
+     <!-- Particle Canvas -->
+     <canvas id="particles-canvas"></canvas>
+
+     <!-- Toast Container -->
+     <div id="toast-container"></div>
+
+     <!-- App Wrapper -->
+     <div class="app-wrapper" id="appWrapper">
+
+          <!-- ── Sidebar ─────────────────────────────────────────── -->
+          <aside class="sidebar" id="sidebar">
+               <div class="sidebar-header">
+                    <div class="logo">
+                         <div class="logo-icon">🔬</div>
+                         <div>
+                              <div class="logo-text">DefectAI</div>
+                              <div class="logo-sub">PCB Inspection System</div>
+                         </div>
+                    </div>
+                    <button class="sidebar-collapse-btn" id="sidebarCollapseBtn" title="Close">✕</button>
+               </div>
+
+               <nav class="sidebar-nav">
+                    <div class="nav-section-label">Main</div>
+                    <a href="/" class="nav-item {% if active == 'dashboard' %}active{% endif %}">
+                         <span class="nav-icon">🏠</span> Dashboard
+                    </a>
+                    <a href="/analytics" class="nav-item {% if active == 'analytics' %}active{% endif %}">
+                         <span class="nav-icon">📊</span> Analytics
+                    </a>
+
+                    <div class="nav-section-label">AI Tools</div>
+                    <a href="/assistant" class="nav-item {% if active == 'assistant' %}active{% endif %}">
+                         <span class="nav-icon">🧠</span> AI Assistant
+                    </a>
+                    <a href="/history" class="nav-item {% if active == 'history' %}active{% endif %}">
+                         <span class="nav-icon">📜</span> History
+                         <span class="nav-badge" id="sidebarPendingBadge" style="display:none"></span>
+                    </a>
+
+                    <div class="nav-section-label">System</div>
+                    <a href="/settings" class="nav-item {% if active == 'settings' %}active{% endif %}">
+                         <span class="nav-icon">⚙️</span> Settings
+                    </a>
+               </nav>
+
+               <div class="sidebar-footer">
+                    <div class="model-health-widget">
+                         <div class="mhw-title">Model Health</div>
+                         <div class="mhw-row">
+                              <span class="mhw-label"><span class="mhw-status-dot"></span>YOLOv8</span>
+                              <span class="mhw-val ok" id="mhwYolo">—</span>
+                         </div>
+                         <div class="mhw-row">
+                              <span class="mhw-label">CNN+LSTM</span>
+                              <span class="mhw-val ok" id="mhwCnn">—</span>
+                         </div>
+                         <div class="mhw-row">
+                              <span class="mhw-label">Anomaly</span>
+                              <span class="mhw-val warn" id="mhwAnomaly">—</span>
+                         </div>
+                    </div>
+               </div>
+          </aside>
+
+          <!-- ── Main Area ───────────────────────────────────────── -->
+          <div class="main-area">
+
+               <!-- Navbar -->
+               <nav class="navbar">
+                    <div class="navbar-left">
+                         <button class="sidebar-toggle-mobile" id="sidebarToggleMobile">☰</button>
+                         <div>
+                              <div class="page-title">{% block page_title %}Dashboard{% endblock %}</div>
+                         </div>
+                    </div>
+                    <div class="navbar-right">
+                         <div class="nav-clock" id="navClock">00:00:00</div>
+                         <div class="nav-status">
+                              <div class="nav-status-dot" id="navStatusDot"></div>
+                              <span class="nav-status-text" id="navStatusText">Connecting…</span>
+                         </div>
+                    </div>
+               </nav>
+
+               <!-- Page Content -->
+               <main class="page-content">
+                    {% block content %}{% endblock %}
+               </main>
+
+          </div><!-- /main-area -->
+     </div><!-- /app-wrapper -->
+
+     <!-- Chart.js -->
+     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+     <!-- Base JS (particles, clock, health, ripple) -->
+     <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+     {% block scripts %}{% endblock %}
+
+</body>
+
+</html>

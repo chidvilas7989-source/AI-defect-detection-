@@ -1,0 +1,12 @@
+# YOLOv8 Dataset Configuration
+# Simplified binary classification (GOOD / DEFECTIVE)
+
+path: data/yolo_dataset  # root dir (relative to train.py)
+train: images/train
+val: images/val
+
+# 2 classes
+nc: 2
+names:
+  0: GOOD
+  1: DEFECTIVE

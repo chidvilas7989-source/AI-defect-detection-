@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block page_title %}⚙️ Settings{% endblock %}
+
+{% block content %}
+<div class="settings-grid fade-up">
+
+     <!-- Model Configuration -->
+     <div class="card">
+          <div class="card-header">
+               <div class="card-title">🤖 Model Configuration</div>
+               <span class="tag tag-cyan">Editable</span>
+          </div>
+          <div class="settings-group">
+               <label class="settings-label">Confidence Threshold</label>
+               <input type="range" min="0" max="100" value="40" class="settings-input" id="confThreshold"
+                    oninput="document.getElementById('confThreshVal').textContent=this.value+'%'"
+                    style="padding:0;border:none;background:transparent;accent-color:var(--cyan)">
+               <div style="text-align:right;font-size:0.8rem;color:var(--cyan);font-family:var(--mono);margin-top:0.25rem"
+                    id="confThreshVal">40%</div>
+          </div>
+          <div class="settings-group">
+               <label class="settings-label">Active Learning Threshold</label>
+               <input type="number" class="settings-input" value="0.80" min="0" max="1" step="0.05">
+          </div>
+          <div class="settings-group">
+               <label class="settings-label">Retrain Trigger Count</label>
+               <input type="number" class="settings-input" value="50" min="10" max="500">
+          </div>
+          <div class="settings-group">
+               <label class="settings-label">Pipeline Mode</label>
+               <select class="settings-select">
+                    <option selected>Full Pipeline (YOLO + CNN + Anomaly)</option>
+                    <option>YOLO Only</option>
+                    <option>CNN+LSTM Only</option>
+               </select>
+          </div>
+          <button class="btn btn-primary btn-full" onclick="showToast('Settings saved!','info')">💾 Save Model
+               Settings</button>
+     </div>
+
+     <!-- UI Preferences -->
+     <div class="card">
+          <div class="card-header">
+               <div class="card-title">🎨 UI Preferences</div>
+          </div>
+          <div class="toggle-row">
+               <div>
+                    <div class="toggle-label">Dark Theme</div>
+                    <div class="toggle-sub">Current: Dark AI Theme</div>
+               </div>
+               <label class="toggle"><input type="checkbox" checked><span class="toggle-track"></span><span
+                         class="toggle-thumb"></span></label>
+          </div>
+          <div class="toggle-row">
+               <div>
+                    <div class="toggle-label">Particle Animation</div>
+                    <div class="toggle-sub">Background particle effect</div>
+               </div>
+               <label class="toggle"><input type="checkbox" checked id="particleToggle"
+                         onchange="toggleParticles(this)">
+                    <span class="toggle-track"></span><span class="toggle-thumb"></span></label>
+          </div>
+          <div class="toggle-row">
+               <div>
+                    <div class="toggle-label">Sound Alerts</div>
+                    <div class="toggle-sub">Beep on FAIL detection</div>
+               </div>
+               <label class="toggle"><input type="checkbox"><span class="toggle-track"></span><span
+                         class="toggle-thumb"></span></label>
+          </div>
+          <div class="toggle-row">
+               <div>
+                    <div class="toggle-label">Auto-download Report</div>
+                    <div class="toggle-sub">Save JSON after each scan</div>
+               </div>
+               <label class="toggle"><input type="checkbox"><span class="toggle-track"></span><span
+                         class="toggle-thumb"></span></label>
+          </div>
+          <div class="toggle-row">
+               <div>
+                    <div class="toggle-label">Show Confidence Ring</div>
+                    <div class="toggle-sub">Display circular confidence gauge</div>
+               </div>
+               <label class="toggle"><input type="checkbox" checked><span class="toggle-track"></span><span
+                         class="toggle-thumb"></span></label>
+          </div>
+          <button class="btn btn-secondary btn-full" style="margin-top:1rem"
+               onclick="showToast('UI preferences saved!','info')">💾 Save Preferences</button>
+     </div>
+
+     <!-- Notifications -->
+     <div class="card">
+          <div class="card-header">
+               <div class="card-title">🔔 Notifications</div>
+          </div>
+          <div class="toggle-row">
+               <div>
+                    <div class="toggle-label">FAIL Toast Alerts</div>
+                    <div class="toggle-sub">Pop-up when defect detected</div>
+               </div>
+               <label class="toggle"><input type="checkbox" checked><span class="toggle-track"></span><span
+                         class="toggle-thumb"></span></label>
+          </div>
+          <div class="toggle-row">
+               <div>
+                    <div class="toggle-label">Active Learning Alert</div>
+                    <div class="toggle-sub">Alert when queue has items</div>
+               </div>
+               <label class="toggle"><input type="checkbox" checked><span class="toggle-track"></span><span
+                         class="toggle-thumb"></span></label>
+          </div>
+          <div class="settings-group" style="margin-top:1rem">
+               <label class="settings-label">Alert Email (optional)</label>
+               <input type="email" class="settings-input" placeholder="alerts@company.com">
+          </div>
+          <button class="btn btn-secondary btn-full" onclick="showToast('Notification settings saved!','info')">💾 Save
+               Alerts</button>
+     </div>
+
+     <!-- System Info -->
+     <div class="card">
+          <div class="card-header">
+               <div class="card-title">🖥️ System Information</div>
+               <span class="tag tag-green" id="sysHealthTag">Online</span>
+          </div>
+          <div id="sysInfoList">
+               <div class="sysinfo-row"><span class="sysinfo-key">Server</span><span class="sysinfo-val">Flask
+                         3.0.3</span></div>
+               <div class="sysinfo-row"><span class="sysinfo-key">Host</span><span
+                         class="sysinfo-val">0.0.0.0:5000</span></div>
+               <div class="sysinfo-row"><span class="sysinfo-key">YOLOv8 Model</span><span class="sysinfo-val"
+                         id="settYolo">—</span></div>
+               <div class="sysinfo-row"><span class="sysinfo-key">CNN+LSTM</span><span class="sysinfo-val"
+                         id="settCnn">—</span></div>
+               <div class="sysinfo-row"><span class="sysinfo-key">Anomaly Detector</span><span class="sysinfo-val"
+                         id="settAnomaly">—</span></div>
+               <div class="sysinfo-row"><span class="sysinfo-key">Backend</span><span class="sysinfo-val"
+                         style="color:var(--green)">Running ✓</span></div>
+               <div class="sysinfo-row"><span class="sysinfo-key">Version</span><span class="sysinfo-val">v2.0 —
+                         Hackathon</span></div>
+          </div>
+          <button class="btn btn-secondary btn-full" style="margin-top:1rem" onclick="checkHealth()">🔄 Refresh
+               Status</button>
+     </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+     async function checkHealth() {
+          try {
+               const r = await fetch('/health');
+               const d = await r.json();
+               document.getElementById('settYolo').textContent = d.yolo_model;
+               document.getElementById('settYolo').style.color = d.yolo_model === 'custom trained' ? 'var(--green)' : 'var(--amber)';
+               document.getElementById('settCnn').textContent = d.cnn_lstm_model;
+               document.getElementById('settCnn').style.color = d.cnn_lstm_model === 'trained' ? 'var(--green)' : 'var(--amber)';
+               document.getElementById('settAnomaly').textContent = d.anomaly_model;
+               document.getElementById('settAnomaly').style.color = d.anomaly_model === 'loaded' ? 'var(--green)' : 'var(--text-muted)';
+               showToast('System status refreshed', 'info');
+          } catch (e) { showToast('Cannot reach server', 'fail'); }
+     }
+     function toggleParticles(el) {
+          const canvas = document.getElementById('particles-canvas');
+          if (canvas) canvas.style.opacity = el.checked ? '0.7' : '0';
+     }
+     checkHealth();
+</script>
+{% endblock %}

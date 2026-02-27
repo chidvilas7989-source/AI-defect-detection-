@@ -1,0 +1,11 @@
+{
+  "dataset": "DeepPCB",
+  "split": {
+    "good": 1501,
+    "bad": 1500,
+    "total": 3001
+  },
+  "good_dir": "C:\\Users\\chidv_8uibc32\\Desktop\\detect\\ai-defect-detection\\data\\good",
+  "bad_dir": "C:\\Users\\chidv_8uibc32\\Desktop\\detect\\ai-defect-detection\\data\\bad",
+  "source": "C:\\Users\\chidv_8uibc32\\Desktop\\detect\\ai-defect-detection\\data\\DeepPCB\\PCBData"
+}

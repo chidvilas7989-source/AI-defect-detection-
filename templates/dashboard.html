@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}🏠 Dashboard{% endblock %}
+
+{% block content %}
+
+<!-- ── KPI Cards ──────────────────────────────────────────── -->
+<div class="kpi-grid fade-up">
+     <div class="kpi-card kpi-cyan">
+          <div class="kpi-label">🔍 Total Inspected</div>
+          <div class="kpi-value" id="kpiTotal">0</div>
+          <div class="kpi-delta" id="kpiTotalDelta">Awaiting data…</div>
+          <div class="kpi-bar">
+               <div class="kpi-bar-fill" id="kpiTotalBar" style="width:0%"></div>
+          </div>
+     </div>
+     <div class="kpi-card kpi-red">
+          <div class="kpi-label">⚠️ Total Defects</div>
+          <div class="kpi-value" id="kpiDefects">0</div>
+          <div class="kpi-delta" id="kpiDefectsDelta">No defects yet</div>
+          <div class="kpi-bar">
+               <div class="kpi-bar-fill" id="kpiDefectsBar" style="width:0%"></div>
+          </div>
+     </div>
+     <div class="kpi-card kpi-green">
+          <div class="kpi-label">✅ Pass Rate</div>
+          <div class="kpi-value" id="kpiPassRate">—%</div>
+          <div class="kpi-delta" id="kpiPassDelta">No data yet</div>
+          <div class="kpi-bar">
+               <div class="kpi-bar-fill" id="kpiPassBar" style="width:0%"></div>
+          </div>
+     </div>
+     <div class="kpi-card kpi-violet">
+          <div class="kpi-label">🎯 Avg Confidence</div>
+          <div class="kpi-value" id="kpiConf">—%</div>
+          <div class="kpi-delta" id="kpiConfDelta">No data yet</div>
+          <div class="kpi-bar">
+               <div class="kpi-bar-fill" id="kpiConfBar" style="width:0%"></div>
+          </div>
+     </div>
+</div>
+
+<!-- ── Full-width Image Inspection Card ──────────────────── -->
+<div class="card" style="display:flex;flex-direction:column;gap:1rem;width:100%">
+     <div class="card-header">
+          <div>
+               <div class="card-title">🖼️ PCB Image Inspection</div>
+               <div class="card-subtitle">Upload or drag &amp; drop a circuit image for AI analysis</div>
+          </div>
+          <span class="card-tag">Step 1</span>
+     </div>
+
+     <!-- Upload Zone — full width, taller -->
+     <div class="upload-zone" id="dropZone" style="min-height:280px">
+          <div class="scan-beam"></div>
+          <input type="file" id="imageInput" accept="image/*" style="display:none">
+
+          <!-- Idle state -->
+          <div class="upload-content" id="uploadIdle">
+               <div class="upload-icon">📡</div>
+               <div class="upload-title">Drop PCB Image Here</div>
+               <div class="upload-sub">JPG, PNG, BMP — any resolution</div>
+               <button class="btn btn-secondary btn-sm" onclick="document.getElementById('imageInput').click()">Browse
+                    Files</button>
+          </div>
+
+          <!-- Preview state -->
+          <div class="upload-content" id="uploadPreview" style="display:none;padding:0">
+               <img id="previewImg" style="width:100%;max-height:320px;object-fit:cover;border-radius:var(--radius)">
+               <div style="position:absolute;bottom:12px;right:12px">
+                    <button class="btn btn-secondary btn-sm"
+                         onclick="document.getElementById('imageInput').click()">Change</button>
+               </div>
+          </div>
+
+          <!-- Progress state -->
+          <div class="upload-progress" id="uploadProgress">
+               <div class="progress-steps">
+                    <div class="progress-step" id="step1">
+                         <div class="step-spinner"></div> Uploading image…
+                    </div>
+                    <div class="progress-step" id="step2">
+                         <div class="step-spinner"></div> Running AI pipeline…
+                    </div>
+                    <div class="progress-step" id="step3">
+                         <div class="step-spinner"></div> Generating report…
+                    </div>
+               </div>
+          </div>
+     </div>
+
+     <!-- Detect Button -->
+     <button class="btn btn-primary btn-full btn-lg" id="detectBtn" disabled onclick="runDetection()">
+          ⚡ Inspect Component
+     </button>
+
+     <!-- Results Section -->
+     <div class="result-area" id="resultArea">
+          <!-- Verdict + Confidence ring -->
+          <div
+               style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.75rem">
+               <div id="verdictBadgeWrap"></div>
+               <div style="display:flex;align-items:center;gap:0.5rem">
+                    <div class="ring-wrap">
+                         <svg class="ring-svg" viewBox="0 0 80 80">
+                              <circle class="ring-bg-circle" cx="40" cy="40" r="34" stroke-width="8" />
+                              <circle class="ring-val-circle" id="confRing" cx="40" cy="40" r="34" stroke-width="8"
+                                   stroke="#06B6D4" stroke-dasharray="213" stroke-dashoffset="213" />
+                         </svg>
+                         <div class="ring-center" id="confRingLabel">0%</div>
+                    </div>
+                    <div>
+                         <div class="text-muted text-xs">Confidence</div>
+                         <div class="bold" id="confValue">—</div>
+                         <div class="text-muted text-xs" id="modelUsed">—</div>
+                    </div>
+               </div>
+          </div>
+
+          <!-- Annotated image — full width -->
+          <div class="result-img-wrap" id="resultImgWrap" style="margin-bottom:0.75rem">
+               <img id="resultImage"
+                    style="width:100%;max-height:400px;object-fit:contain;border-radius:var(--radius-sm);opacity:0;transition:opacity 0.4s ease"
+                    alt="Result">
+          </div>
+
+          <!-- Defect chips -->
+          <div id="defectsArea"></div>
+
+          <!-- AI Explanation -->
+          <div class="ai-explanation" id="aiExplanation" style="display:none">
+               <div class="ai-explanation-header">🧠 AI Analysis</div>
+               <div class="ai-explanation-text" id="aiExplanationText"></div>
+          </div>
+
+          <!-- Download Report -->
+          <div style="margin-top:0.75rem;text-align:right">
+               <button class="btn btn-secondary btn-sm" onclick="downloadReport()">⬇️ Download Report</button>
+          </div>
+     </div>
+</div><!-- /inspection card -->
+
+<!-- ── Bottom Section — Charts + Recent ──────────────────── -->
+<div class="dashboard-bottom">
+
+     <!-- Confidence over time -->
+     <div class="card">
+          <div class="card-header">
+               <div>
+                    <div class="card-title">📈 Confidence Trend</div>
+                    <div class="card-subtitle">Confidence score per inspection</div>
+               </div>
+               <button class="btn btn-secondary btn-sm" onclick="resetCharts()">Reset</button>
+          </div>
+          <div class="chart-container" style="height:180px">
+               <canvas id="lineChart"></canvas>
+          </div>
+     </div>
+
+     <!-- Defect Pie -->
+     <div class="card">
+          <div class="card-header">
+               <div>
+                    <div class="card-title">🥧 Defect Distribution</div>
+                    <div class="card-subtitle">Live breakdown by type</div>
+               </div>
+               <span class="card-tag">Live</span>
+          </div>
+          <div class="chart-container" style="height:180px">
+               <canvas id="pieChart"></canvas>
+          </div>
+     </div>
+
+     <!-- Defect Bar -->
+     <div class="card">
+          <div class="card-header">
+               <div>
+                    <div class="card-title">📊 Defect Frequency</div>
+                    <div class="card-subtitle">Count per class</div>
+               </div>
+          </div>
+          <div class="chart-container" style="height:180px">
+               <canvas id="barChart"></canvas>
+          </div>
+     </div>
+
+     <!-- Recent detections -->
+     <div class="card">
+          <div class="card-header">
+               <div class="card-title">⏱ Recent Inspections</div>
+               <span class="tag tag-green" id="recentCount">0</span>
+          </div>
+          <div id="recentTable" style="overflow-x:auto">
+               <div class="empty-state">
+                    <div class="empty-icon">🔍</div>No inspections yet
+               </div>
+          </div>
+     </div>
+
+</div><!-- /dashboard-bottom -->
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+<script>
+     initDashboardCharts();
+     loadHistory();
+</script>
+{% endblock %}

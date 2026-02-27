@@ -1,0 +1,15 @@
+path: C:/Users/chidv_8uibc32/Desktop/detect/ai-defect-detection/data/yolo_dataset
+train: images/train
+val: images/val
+nc: 10
+names:
+  0: crack
+  1: blowhole
+  2: break
+  3: fray
+  4: open
+  5: short
+  6: mousebite
+  7: spur
+  8: copper
+  9: pin_hole

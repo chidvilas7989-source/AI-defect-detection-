@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}AI Assistant{% endblock %}
+{% block page_title %}🧠 AI Assistant{% endblock %}
+
+{% block content %}
+<div class="chat-layout">
+
+     <!-- ── Chat Panel ───────────────────────────────── -->
+     <div class="card chat-panel" style="padding:0;overflow:hidden">
+          <!-- Messages -->
+          <div class="chat-messages" id="chatMessages">
+               <!-- Welcome message -->
+               <div class="msg ai fade-up">
+                    <div class="msg-avatar">🤖</div>
+                    <div>
+                         <div class="msg-bubble">
+                              👋 Hello! I'm <strong>DefectAI Assistant</strong>.<br><br>
+                              I have real-time access to your inspection data. Ask me anything about defects, pass
+                              rates, or model performance!
+                         </div>
+                         <div class="msg-time">Just now</div>
+                    </div>
+               </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="chat-input-area">
+               <div class="quick-actions" id="quickActions">
+                    <button class="quick-action-btn" onclick="sendQuickMsg('Show last 5 defects')">Last 5
+                         defects</button>
+                    <button class="quick-action-btn" onclick="sendQuickMsg('What is today\'s pass rate?')">Pass
+                         rate</button>
+                    <button class="quick-action-btn" onclick="sendQuickMsg('Which defect type is most common?')">Common
+                         defects</button>
+                    <button class="quick-action-btn" onclick="sendQuickMsg('How confident is the model?')">Model
+                         confidence</button>
+                    <button class="quick-action-btn"
+                         onclick="sendQuickMsg('Explain the latest inspection result')">Latest result</button>
+                    <button class="quick-action-btn" onclick="sendQuickMsg('System health check')">Health check</button>
+               </div>
+               <div class="chat-input-row">
+                    <textarea class="chat-input" id="chatInput"
+                         placeholder="Ask about defects, pass rates, model confidence…" rows="1"
+                         onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage()}"></textarea>
+                    <button class="chat-send-btn" onclick="sendMessage()">➜</button>
+               </div>
+          </div>
+     </div>
+
+     <!-- ── AI Insights Panel ─────────────────────────── -->
+     <div class="insights-panel">
+          <div class="card" style="padding:1rem">
+               <div class="card-title" style="margin-bottom:0.75rem">⚡ Live Insights</div>
+               <div style="display:flex;flex-direction:column;gap:0.6rem">
+                    <div class="insight-card">
+                         <div class="insight-label">Last Inspection</div>
+                         <div class="insight-value" id="insLastResult">—</div>
+                         <div class="insight-sub" id="insLastTime">No data yet</div>
+                    </div>
+                    <div class="insight-card">
+                         <div class="insight-label">Highest Confidence</div>
+                         <div class="insight-value" id="insHighConf">—</div>
+                         <div class="insight-sub" id="insHighConfFile">—</div>
+                    </div>
+                    <div class="insight-card">
+                         <div class="insight-label">Most Common Defect</div>
+                         <div class="insight-value" id="insMostCommon">—</div>
+                         <div class="insight-sub" id="insMostCommonCount">No defects recorded</div>
+                    </div>
+                    <div class="insight-card">
+                         <div class="insight-label">Recommended Action</div>
+                         <div class="insight-value" id="insAction" style="font-size:0.88rem;color:var(--cyan)">
+                              Awaiting first inspection
+                         </div>
+                    </div>
+                    <div class="insight-card">
+                         <div class="insight-label">Session Pass Rate</div>
+                         <div class="insight-value" id="insPassRate">—</div>
+                         <div class="insight-sub" id="insPassRateSub">—</div>
+                    </div>
+               </div>
+          </div>
+
+          <div class="card" style="padding:1rem">
+               <div class="card-title" style="margin-bottom:0.75rem">🧬 Model Info</div>
+               <div id="modelInfoList">
+                    <div class="sysinfo-row"><span class="sysinfo-key">YOLOv8</span><span class="sysinfo-val"
+                              id="miYolo">—</span></div>
+                    <div class="sysinfo-row"><span class="sysinfo-key">CNN+LSTM</span><span class="sysinfo-val"
+                              id="miCnn">—</span></div>
+                    <div class="sysinfo-row"><span class="sysinfo-key">Anomaly</span><span class="sysinfo-val"
+                              id="miAnomaly">—</span></div>
+                    <div class="sysinfo-row"><span class="sysinfo-key">Classes</span><span class="sysinfo-val">2
+                              (GOOD/DEFECTIVE)</span></div>
+                    <div class="sysinfo-row"><span class="sysinfo-key">Pipeline</span><span class="sysinfo-val"
+                              style="color:var(--green)">Active</span></div>
+               </div>
+          </div>
+     </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/assistant.js') }}"></script>
+{% endblock %}
